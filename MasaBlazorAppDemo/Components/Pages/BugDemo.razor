@@ -1,0 +1,140 @@
+﻿@page "/bugdemo"
+@rendermode InteractiveServer
+
+<h3>BugDemo</h3>
+
+<MRow>    
+    <MCol Cols="2">
+        <MSwitch @bind-Value="selectedFormOnPhase.NewProduct" Label="New Product" Class="mx-4 my-0 pa-0">
+        </MSwitch>
+    </MCol>
+    <MCol Cols="2">
+        <MSwitch @bind-Value="selectedFormOnPhase.NewProcess" Label="New Process" Class="mx-4 my-0 pa-0">
+        </MSwitch>
+    </MCol>
+    <MCol Cols="2">
+        <MSwitch @bind-Value="selectedFormOnPhase.NewEquipmentOrTool" Label="New Equipment or Tool" Class="mx-4 my-0 pa-0">
+        </MSwitch>
+    </MCol>
+</MRow>
+
+@foreach (var group in selectedFormOnPhase!.TaskItems!.GroupBy(i => i.TaskType))
+{
+    if ((bool)selectedFormOnPhase!.GetType().GetProperty(group.Key!)?.GetValue(selectedFormOnPhase!, null)!)
+    {
+        <h4>@group.Key</h4>
+        var g = group.ToList();
+        @foreach (var item in g)
+        {
+            <MRadioGroup @bind-Value="item.Result" Column Class="d-flex mb-0 pb-0" Style="width:100%">
+                <LabelContent>
+                    <div class="ml-1"><strong>@item!.TaskName</strong></div>
+                </LabelContent>
+                <ChildContent>
+                    @{
+                        var options = item!.GetResultOptions();
+                    }
+                    @foreach (string option in options)
+                    {
+                        <MRadio Label="@option" TValue="string" Value="option" Class="d-flex ml-0 pl-0"></MRadio>
+                    }
+                </ChildContent>
+            </MRadioGroup>
+        }
+    }
+}
+
+@code {
+    public class LeadProjectTaskForm
+    {
+        public bool NewProduct { get; set; }
+        public bool NewProcess { get; set; }
+        public bool NewEquipmentOrTool { get; set; }
+        public List<TaskItem>? TaskItems { get; set; }
+    }
+    public class TaskItem
+    {
+        public string TaskName { get; set; } = null!;
+        public string? TaskType { get; set; }
+        public string? Result { get; set; }
+        public string? ResultType { get; set; }
+        // public int? LeadProjectTaskFormId { get; set; }
+        // public LeadProjectTaskForm LeadProjectTaskForm { get; set; }
+        public string[] GetResultOptions()
+        {
+            switch (ResultType)
+            {
+                case nameof(YesNoResult):
+                    return Enum.GetValues(typeof(YesNoResult)).Cast<YesNoResult>().Select(e => e.ToString()).ToArray();
+                case nameof(OkNokResult):
+                    return Enum.GetValues(typeof(OkNokResult)).Cast<OkNokResult>().Select(e => e.ToString()).ToArray();
+                case nameof(YesNoNaResult):
+                    return Enum.GetValues(typeof(YesNoNaResult)).Cast<YesNoNaResult>().Select(e => e.ToString()).ToArray();
+                case nameof(OkNokNaResult):
+                    return Enum.GetValues(typeof(OkNokNaResult)).Cast<OkNokNaResult>().Select(e => e.ToString()).ToArray();
+                default:
+                    throw new InvalidOperationException($"Unknown result type: {ResultType}");
+            }
+        }
+    }
+    public enum YesNoResult
+    {
+        Yes,
+        No
+    }
+
+    public enum OkNokResult
+    {
+        OK,
+        NOK
+    }
+
+    public enum YesNoNaResult
+    {
+        Yes,
+        No,
+        NA
+    }
+
+    public enum OkNokNaResult
+    {
+        OK,
+        NOK,
+        NA
+    }
+
+
+    public LeadProjectTaskForm selectedFormOnPhase;
+
+    protected override void OnInitialized()
+    {
+        selectedFormOnPhase = new()
+            {
+                // NewProduct = true,
+                // NewProcess = false,
+                // NewEquipmentOrTool = false,
+                TaskItems = new()
+            {
+                new TaskItem()
+                {
+                    TaskName = "Product Task 1",
+                    TaskType = nameof(LeadProjectTaskForm.NewProduct),
+                    ResultType = nameof(OkNokResult)
+                },
+                new TaskItem()
+                {
+                    TaskName = "Product Task 2",
+                    TaskType = nameof(LeadProjectTaskForm.NewProduct),
+                    ResultType = nameof(OkNokNaResult)
+                },
+                new TaskItem()
+                {
+                    TaskName = "Process Task 2",
+                    TaskType = nameof(LeadProjectTaskForm.NewProduct),
+                    ResultType = nameof(OkNokNaResult)
+                }
+            }
+            };
+        base.OnInitialized();
+    }
+}
